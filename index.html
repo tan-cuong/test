@@ -2,7 +2,7 @@
 <html lang="vi">
 <head>
 <meta charset="UTF-8">
-<title>Quản lý tuyến – trạm – chuyến xe – trường học</title>
+<title>Quản lý tuyến – trạm – chuyến xe</title>
 
 <link rel="stylesheet"
  href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
@@ -14,7 +14,7 @@ h3 { text-align:center; margin:5px; }
 #container { display:flex; height:90vh; }
 
 #sidebar {
-  width:340px;
+  width:330px;
   border-right:1px solid #ccc;
   padding:10px;
   overflow-y:auto;
@@ -38,7 +38,7 @@ button, select {
 </head>
 <body>
 
-<h3>🛣️ Tuyến – 📍 Trạm – 🛵 Chuyến xe – 🎓 Trường học (Quy Nhơn)</h3>
+<h3>🛣️ Tuyến – 📍 Trạm – 🛵 Chuyến xe</h3>
 
 <div id="container">
 <div id="sidebar">
@@ -107,20 +107,15 @@ function renderStations() {
   });
 }
 
-// ================= ICON =================
+// ================= ICON XE =================
 const bikeIcon = L.icon({
   iconUrl:"https://cdn-icons-png.flaticon.com/512/2972/2972185.png",
   iconSize:[40,40],
   iconAnchor:[20,20]
 });
 
-const schoolIcon = L.icon({
-  iconUrl:"https://cdn-icons-png.flaticon.com/512/2991/2991148.png",
-  iconSize:[35,35],
-  iconAnchor:[17,35]
-});
-
 let bikeMarker = null;
+let moveTimer = null;
 
 // ================= TÍNH KHOẢNG CÁCH =================
 function distance(a,b) {
@@ -142,12 +137,22 @@ function totalRouteDistance(p) {
   return d;
 }
 
+// ================= NỘI SUY CHO CHẠY TRƠN =================
+function interpolate(a, b, t) {
+  return [
+    a[0] + (b[0]-a[0]) * t,
+    a[1] + (b[1]-a[1]) * t
+  ];
+}
+
 // ================= ĐẶT CHUYẾN =================
 function bookTrip() {
   if (stations.length<2 || routePoints.length<2) {
     alert("Cần trạm & tuyến trước");
     return;
   }
+
+  if (moveTimer) clearInterval(moveTimer);
 
   const from = stations[fromStation.value];
   const to = stations[toStation.value];
@@ -157,28 +162,42 @@ function bookTrip() {
   bikeMarker = L.marker(from.latlng,{icon:bikeIcon}).addTo(map);
 
   const km = totalRouteDistance(routePoints);
-  const speed = 30;
+  const speed = 30; // km/h
   const time = (km/speed*60).toFixed(1);
 
   tripInfo.innerHTML =
     `📏 Quãng đường: ${km.toFixed(2)} km<br>
      ⏱️ Thời gian dự kiến: ${time} phút`;
 
-  moveBike(to.latlng);
+  moveSmooth(to.latlng);
 }
 
-function moveBike(dest) {
-  let i=0;
-  const timer = setInterval(()=>{
-    if (i>=routePoints.length) {
-      clearInterval(timer);
+// ================= XE CHẠY TRƠN =================
+function moveSmooth(dest) {
+  let i = 0;
+  let t = 0;
+  const step = 0.02; // càng nhỏ càng mượt
+
+  moveTimer = setInterval(()=>{
+    if (i >= routePoints.length-1) {
+      clearInterval(moveTimer);
       bikeMarker.setLatLng(dest);
       alert("🏁 Xe đã tới trạm đích");
       return;
     }
-    bikeMarker.setLatLng(routePoints[i]);
-    i++;
-  },500);
+
+    const p1 = routePoints[i];
+    const p2 = routePoints[i+1];
+
+    const pos = interpolate(p1, p2, t);
+    bikeMarker.setLatLng(pos);
+
+    t += step;
+    if (t >= 1) {
+      t = 0;
+      i++;
+    }
+  }, 30);
 }
 
 // ================= CLICK MAP =================
@@ -198,29 +217,8 @@ map.on('click',e=>{
     renderStations();
   }
 });
-
-// ================= TRƯỜNG HỌC QUY NHƠN =================
-const schools = [
- {name:"Đại học Quy Nhơn",lat:13.7819,lng:109.2194},
- {name:"THPT Quốc Học Quy Nhơn",lat:13.7812,lng:109.2168},
- {name:"THPT Trần Cao Vân",lat:13.7708,lng:109.2226},
- {name:"THPT Lê Quý Đôn",lat:13.7695,lng:109.2290},
- {name:"THCS Đống Đa",lat:13.7739,lng:109.2214},
- {name:"Tiểu học Trần Quốc Toản",lat:13.7763,lng:109.2172}
-];
-
-const schoolLayer = L.layerGroup().addTo(map);
-
-schools.forEach(s=>{
-  L.marker([s.lat,s.lng],{icon:schoolIcon})
-   .bindPopup("🎓 "+s.name)
-   .addTo(schoolLayer);
-});
-
-L.control.layers(null,{
-  "🎓 Trường học":schoolLayer
-}).addTo(map);
 </script>
 
 </body>
 </html>
+
