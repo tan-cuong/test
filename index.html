@@ -1,201 +1,225 @@
 <!DOCTYPE html>
 <html lang="vi">
 <head>
-  <meta charset="UTF-8">
-  <title>Quản lý tuyến – trạm – chuyến xe</title>
+<meta charset="UTF-8">
+<title>Quản lý tuyến – trạm – chuyến xe – trường học</title>
 
-  <link rel="stylesheet"
-    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
+<link rel="stylesheet"
+ href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
-  <style>
-    body { margin:0; font-family: Arial; }
-    h3 { text-align:center; margin:5px; }
+<style>
+body { margin:0; font-family: Arial; }
+h3 { text-align:center; margin:5px; }
 
-    #container { display:flex; height:90vh; }
+#container { display:flex; height:90vh; }
 
-    #sidebar {
-      width:330px;
-      border-right:1px solid #ccc;
-      padding:10px;
-      overflow-y:auto;
-    }
+#sidebar {
+  width:340px;
+  border-right:1px solid #ccc;
+  padding:10px;
+  overflow-y:auto;
+}
 
-    #map { flex:1; }
+#map { flex:1; }
 
-    button, select {
-      width:100%;
-      margin-bottom:6px;
-      padding:8px;
-    }
+button, select {
+  width:100%;
+  margin-bottom:6px;
+  padding:8px;
+}
 
-    .info {
-      background:#f4f4f4;
-      padding:8px;
-      margin-top:5px;
-      font-size:14px;
-    }
-  </style>
+.info {
+  background:#f4f4f4;
+  padding:8px;
+  margin-top:5px;
+  font-size:14px;
+}
+</style>
 </head>
 <body>
 
-<h3>🛣️ Tuyến – 📍 Trạm – 🛵 Chuyến xe</h3>
+<h3>🛣️ Tuyến – 📍 Trạm – 🛵 Chuyến xe – 🎓 Trường học (Quy Nhơn)</h3>
 
 <div id="container">
-  <div id="sidebar">
+<div id="sidebar">
 
-    <button onclick="startDrawRoute()">➕ Vẽ tuyến</button>
-    <button onclick="startAddStation()">📍 Thêm trạm</button>
+<button onclick="startDrawRoute()">➕ Vẽ tuyến</button>
+<button onclick="startAddStation()">📍 Thêm trạm</button>
 
-    <h4>📍 Danh sách trạm</h4>
-    <ul id="stationList"></ul>
+<h4>📍 Danh sách trạm</h4>
+<ul id="stationList"></ul>
 
-    <hr>
+<hr>
 
-    <h4>🛵 Đặt chuyến</h4>
-    <select id="fromStation"></select>
-    <select id="toStation"></select>
-    <button onclick="bookTrip()">🚀 Đặt chuyến</button>
+<h4>🛵 Đặt chuyến</h4>
+<select id="fromStation"></select>
+<select id="toStation"></select>
+<button onclick="bookTrip()">🚀 Đặt chuyến</button>
 
-    <div class="info" id="tripInfo">Chưa có chuyến</div>
-  </div>
+<div class="info" id="tripInfo">Chưa có chuyến</div>
 
-  <div id="map"></div>
+</div>
+
+<div id="map"></div>
 </div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  const map = L.map('map').setView([21.0285,105.8542],13);
+// ================= BẢN ĐỒ =================
+const map = L.map('map').setView([13.7829,109.2190],13);
 
-  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    maxZoom: 19
-  }).addTo(map);
+L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+  maxZoom:19
+}).addTo(map);
 
-  let mode = null;
+let mode = null;
 
-  // ================= TUYẾN =================
-  let routePoints = [];
-  let routeLine = null;
+// ================= TUYẾN =================
+let routePoints = [];
+let routeLine = null;
 
-  function startDrawRoute() {
-    mode = 'route';
-    routePoints = [];
-    if (routeLine) map.removeLayer(routeLine);
-    alert("Click để vẽ tuyến");
-  }
+function startDrawRoute() {
+  mode = 'route';
+  routePoints = [];
+  if (routeLine) map.removeLayer(routeLine);
+  alert("Click để vẽ tuyến");
+}
 
-  // ================= TRẠM =================
-  let stations = [];
+// ================= TRẠM =================
+let stations = [];
 
-  function startAddStation() {
-    mode = 'station';
-    alert("Click để thêm trạm");
-  }
+function startAddStation() {
+  mode = 'station';
+  alert("Click để thêm trạm");
+}
 
-  function renderStations() {
-    const ul = document.getElementById("stationList");
-    const from = document.getElementById("fromStation");
-    const to = document.getElementById("toStation");
+function renderStations() {
+  const ul = document.getElementById("stationList");
+  const from = document.getElementById("fromStation");
+  const to = document.getElementById("toStation");
 
-    ul.innerHTML = from.innerHTML = to.innerHTML = "";
+  ul.innerHTML = from.innerHTML = to.innerHTML = "";
 
-    stations.forEach((s,i)=>{
-      ul.innerHTML += `<li>${s.name}</li>`;
-      from.innerHTML += `<option value="${i}">${s.name}</option>`;
-      to.innerHTML += `<option value="${i}">${s.name}</option>`;
-    });
-  }
-
-  // ================= ICON XE =================
-  const bikeIcon = L.icon({
-    iconUrl: "https://cdn-icons-png.flaticon.com/512/2972/2972185.png",
-    iconSize: [40,40],
-    iconAnchor: [20,20]
+  stations.forEach((s,i)=>{
+    ul.innerHTML += `<li>${s.name}</li>`;
+    from.innerHTML += `<option value="${i}">${s.name}</option>`;
+    to.innerHTML += `<option value="${i}">${s.name}</option>`;
   });
+}
 
-  let bikeMarker = null;
+// ================= ICON =================
+const bikeIcon = L.icon({
+  iconUrl:"https://cdn-icons-png.flaticon.com/512/2972/2972185.png",
+  iconSize:[40,40],
+  iconAnchor:[20,20]
+});
 
-  // ================= TÍNH KHOẢNG CÁCH =================
-  function distance(a,b) {
-    const R = 6371;
-    const dLat = (b[0]-a[0]) * Math.PI/180;
-    const dLng = (b[1]-a[1]) * Math.PI/180;
-    const lat1 = a[0] * Math.PI/180;
-    const lat2 = b[0] * Math.PI/180;
+const schoolIcon = L.icon({
+  iconUrl:"https://cdn-icons-png.flaticon.com/512/2991/2991148.png",
+  iconSize:[35,35],
+  iconAnchor:[17,35]
+});
 
-    const x = Math.sin(dLat/2)**2 +
-              Math.cos(lat1)*Math.cos(lat2)*
-              Math.sin(dLng/2)**2;
-    return 2 * R * Math.asin(Math.sqrt(x));
+let bikeMarker = null;
+
+// ================= TÍNH KHOẢNG CÁCH =================
+function distance(a,b) {
+  const R = 6371;
+  const dLat = (b[0]-a[0])*Math.PI/180;
+  const dLng = (b[1]-a[1])*Math.PI/180;
+  const lat1 = a[0]*Math.PI/180;
+  const lat2 = b[0]*Math.PI/180;
+
+  const x = Math.sin(dLat/2)**2 +
+    Math.cos(lat1)*Math.cos(lat2)*Math.sin(dLng/2)**2;
+  return 2*R*Math.asin(Math.sqrt(x));
+}
+
+function totalRouteDistance(p) {
+  let d=0;
+  for(let i=1;i<p.length;i++)
+    d+=distance(p[i-1],p[i]);
+  return d;
+}
+
+// ================= ĐẶT CHUYẾN =================
+function bookTrip() {
+  if (stations.length<2 || routePoints.length<2) {
+    alert("Cần trạm & tuyến trước");
+    return;
   }
 
-  function totalRouteDistance(points) {
-    let d = 0;
-    for(let i=1;i<points.length;i++)
-      d += distance(points[i-1], points[i]);
-    return d;
-  }
+  const from = stations[fromStation.value];
+  const to = stations[toStation.value];
 
-  // ================= ĐẶT CHUYẾN =================
-  function bookTrip() {
-    if (stations.length < 2 || routePoints.length < 2) {
-      alert("Cần trạm & tuyến trước");
+  if (bikeMarker) map.removeLayer(bikeMarker);
+
+  bikeMarker = L.marker(from.latlng,{icon:bikeIcon}).addTo(map);
+
+  const km = totalRouteDistance(routePoints);
+  const speed = 30;
+  const time = (km/speed*60).toFixed(1);
+
+  tripInfo.innerHTML =
+    `📏 Quãng đường: ${km.toFixed(2)} km<br>
+     ⏱️ Thời gian dự kiến: ${time} phút`;
+
+  moveBike(to.latlng);
+}
+
+function moveBike(dest) {
+  let i=0;
+  const timer = setInterval(()=>{
+    if (i>=routePoints.length) {
+      clearInterval(timer);
+      bikeMarker.setLatLng(dest);
+      alert("🏁 Xe đã tới trạm đích");
       return;
     }
+    bikeMarker.setLatLng(routePoints[i]);
+    i++;
+  },500);
+}
 
-    const from = stations[fromStation.value];
-    const to = stations[toStation.value];
-
-    if (bikeMarker) map.removeLayer(bikeMarker);
-
-    bikeMarker = L.marker(from.latlng, {icon: bikeIcon}).addTo(map);
-
-    const km = totalRouteDistance(routePoints);
-    const speed = 30; // km/h
-    const time = (km / speed * 60).toFixed(1);
-
-    document.getElementById("tripInfo").innerHTML =
-      `📏 Quãng đường: ${km.toFixed(2)} km<br>
-       ⏱️ Thời gian dự kiến: ${time} phút`;
-
-    moveBikeToDestination(to.latlng);
+// ================= CLICK MAP =================
+map.on('click',e=>{
+  if (mode==='route') {
+    routePoints.push([e.latlng.lat,e.latlng.lng]);
+    if (routeLine) map.removeLayer(routeLine);
+    routeLine = L.polyline(routePoints,{color:'red'}).addTo(map);
   }
 
-  // ================= XE CHẠY & DỪNG =================
-  function moveBikeToDestination(dest) {
-    let i = 0;
-    const timer = setInterval(()=>{
-      if (i >= routePoints.length) {
-        clearInterval(timer);
-        bikeMarker.setLatLng(dest);
-        alert("🏁 Xe đã tới trạm đích");
-        return;
-      }
-      bikeMarker.setLatLng(routePoints[i]);
-      i++;
-    }, 500);
+  if (mode==='station') {
+    const name = prompt("Tên trạm:");
+    if (!name) return;
+
+    const marker = L.marker(e.latlng).addTo(map);
+    stations.push({name,latlng:e.latlng,marker});
+    renderStations();
   }
+});
 
-  // ================= CLICK MAP =================
-  map.on('click', e=>{
-    if (mode === 'route') {
-      routePoints.push([e.latlng.lat, e.latlng.lng]);
-      if (routeLine) map.removeLayer(routeLine);
-      routeLine = L.polyline(routePoints,{color:'red'}).addTo(map);
-    }
+// ================= TRƯỜNG HỌC QUY NHƠN =================
+const schools = [
+ {name:"Đại học Quy Nhơn",lat:13.7819,lng:109.2194},
+ {name:"THPT Quốc Học Quy Nhơn",lat:13.7812,lng:109.2168},
+ {name:"THPT Trần Cao Vân",lat:13.7708,lng:109.2226},
+ {name:"THPT Lê Quý Đôn",lat:13.7695,lng:109.2290},
+ {name:"THCS Đống Đa",lat:13.7739,lng:109.2214},
+ {name:"Tiểu học Trần Quốc Toản",lat:13.7763,lng:109.2172}
+];
 
-    if (mode === 'station') {
-      const name = prompt("Tên trạm:");
-      if (!name) return;
+const schoolLayer = L.layerGroup().addTo(map);
 
-      const marker = L.marker(e.latlng).addTo(map);
-      stations.push({
-        name,
-        latlng: e.latlng,
-        marker
-      });
-      renderStations();
-    }
-  });
+schools.forEach(s=>{
+  L.marker([s.lat,s.lng],{icon:schoolIcon})
+   .bindPopup("🎓 "+s.name)
+   .addTo(schoolLayer);
+});
+
+L.control.layers(null,{
+  "🎓 Trường học":schoolLayer
+}).addTo(map);
 </script>
 
 </body>
