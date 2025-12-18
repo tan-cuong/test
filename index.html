@@ -2,36 +2,135 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Quản lý tuyến đường</title>
+  <title>Quản lý tuyến & trạm</title>
 
   <link rel="stylesheet"
     href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
   <style>
     body { margin:0; font-family: Arial; }
-    h3 { text-align:center; }
-    #map { height: 90vh; }
+    h3 { text-align:center; margin:5px; }
+
+    #container {
+      display: flex;
+      height: 90vh;
+    }
+
+    #sidebar {
+      width: 300px;
+      border-right: 1px solid #ccc;
+      padding: 10px;
+      overflow-y: auto;
+    }
+
+    #map {
+      flex: 1;
+    }
+
+    button {
+      width: 100%;
+      margin-bottom: 5px;
+      padding: 8px;
+      cursor: pointer;
+    }
+
+    ul { padding-left: 20px; }
+    li { margin-bottom: 5px; }
   </style>
 </head>
 <body>
 
-<h3>🛣️ Demo quản lý tuyến đường</h3>
-<div id="map"></div>
+<h3>🛣️ Quản lý tuyến đường & trạm</h3>
+
+<div id="container">
+  <div id="sidebar">
+    <button onclick="startDrawRoute()">➕ Vẽ tuyến</button>
+    <button onclick="startAddStation()">📍 Thêm trạm</button>
+
+    <h4>📍 Danh sách trạm</h4>
+    <ul id="stationList"></ul>
+  </div>
+
+  <div id="map"></div>
+</div>
 
 <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
+  // Khởi tạo bản đồ
   const map = L.map('map').setView([21.0285,105.8542],13);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
     maxZoom: 19
   }).addTo(map);
 
-  let points=[], line=null;
+  // ================= TUYẾN ĐƯỜNG =================
+  let routePoints = [];
+  let routeLine = null;
+  let mode = null; // 'route' | 'station'
 
-  map.on('click', e=>{
-    points.push([e.latlng.lat, e.latlng.lng]);
-    if(line) map.removeLayer(line);
-    line = L.polyline(points,{color:'red'}).addTo(map);
+  function startDrawRoute() {
+    mode = 'route';
+    routePoints = [];
+    if (routeLine) map.removeLayer(routeLine);
+    alert("Click lên bản đồ để vẽ tuyến đường");
+  }
+
+  // ================= TRẠM =================
+  let stations = [];
+
+  function startAddStation() {
+    mode = 'station';
+    alert("Click lên bản đồ để thêm trạm");
+  }
+
+  function renderStationList() {
+    const ul = document.getElementById("stationList");
+    ul.innerHTML = "";
+
+    stations.forEach((s, i) => {
+      const li = document.createElement("li");
+      li.innerHTML = `
+        ${s.name}
+        <button onclick="removeStation(${i})">❌</button>
+      `;
+      ul.appendChild(li);
+    });
+  }
+
+  function removeStation(index) {
+    map.removeLayer(stations[index].marker);
+    stations.splice(index,1);
+    renderStationList();
+  }
+
+  // ================= CLICK MAP =================
+  map.on('click', e => {
+
+    // VẼ TUYẾN
+    if (mode === 'route') {
+      routePoints.push([e.latlng.lat, e.latlng.lng]);
+      if (routeLine) map.removeLayer(routeLine);
+      routeLine = L.polyline(routePoints,{color:'red'}).addTo(map);
+    }
+
+    // THÊM TRẠM
+    if (mode === 'station') {
+      const name = prompt("Nhập tên trạm:");
+      if (!name) return;
+
+      const marker = L.marker(e.latlng)
+        .addTo(map)
+        .bindPopup(`<b>${name}</b>`);
+
+      stations.push({
+        name: name,
+        latlng: e.latlng,
+        marker: marker
+      });
+
+      renderStationList();
+    }
+
   });
 </script>
 
