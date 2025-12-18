@@ -2,52 +2,36 @@
 <html lang="vi">
 <head>
   <meta charset="UTF-8">
-  <title>Demo quản lý tuyến đường</title>
+  <title>Quản lý tuyến đường</title>
 
-  <!-- Leaflet CSS -->
-  <link rel="stylesheet" href="https://unpkg.com/leaflet/dist/leaflet.css" />
+  <link rel="stylesheet"
+    href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css"/>
 
   <style>
-    body {
-      margin: 0;
-      font-family: Arial;
-      text-align: center;
-    }
-    #map {
-      height: 90vh;
-    }
+    body { margin:0; font-family: Arial; }
+    h3 { text-align:center; }
+    #map { height: 90vh; }
   </style>
 </head>
 <body>
 
 <h3>🛣️ Demo quản lý tuyến đường</h3>
-<button onclick="startDraw()">➕ Vẽ tuyến</button>
 <div id="map"></div>
 
-<!-- Leaflet JS -->
-<script src="https://unpkg.com/leaflet/dist/leaflet.js"></script>
-
+<script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js"></script>
 <script>
-  const map = L.map('map').setView([21.0285, 105.8542], 13);
+  const map = L.map('map').setView([21.0285,105.8542],13);
 
   L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-    attribution: '© OpenStreetMap'
+    maxZoom: 19
   }).addTo(map);
 
-  let points = [];
-  let line = null;
+  let points=[], line=null;
 
-  function startDraw() {
-    points = [];
-    if (line) map.removeLayer(line);
-    alert("Click lên bản đồ để vẽ tuyến đường");
-  }
-
-  map.on('click', function (e) {
+  map.on('click', e=>{
     points.push([e.latlng.lat, e.latlng.lng]);
-
-    if (line) map.removeLayer(line);
-    line = L.polyline(points, { color: 'red' }).addTo(map);
+    if(line) map.removeLayer(line);
+    line = L.polyline(points,{color:'red'}).addTo(map);
   });
 </script>
 
